@@ -5,7 +5,7 @@ import { FaInstagram, FaWhatsapp } from 'react-icons/fa';
        <footer className="bg-caramel text-cream py-8">
          <div className="container mx-auto px-4 text-center">
            <h3 className="text-2xl font-script mb-4">Izzalia Craft</h3>
-           <p className="mb-4">Jadilah nyaman dan stylish</p>
+           <p className="mb-4">Make you comfortable and stylish 🤍</p>
            <div className="flex justify-center space-x-6 mb-4">
              <a href="https://instagram.com/izzalia.id" target="_blank" rel="noopener noreferrer">
                <FaInstagram className="w-6 h-6 hover:text-pastelPink" />

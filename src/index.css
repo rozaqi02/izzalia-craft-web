@@ -1,9 +1,36 @@
-@import url('https://fonts.googleapis.com/css2?family=Pacifico&family=Roboto:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Poppins:wght@400;600;700&display=swap');
 
    @tailwind base;
    @tailwind components;
    @tailwind utilities;
 
+   :root {
+     --cream: #F5E9D6;
+     --caramel: #8B6F47;
+     --sage: #A8B5A2;
+     --pastelPink: #F4C7C3;
+   }
+
+   [data-theme="dark"] {
+     --cream: #2A2A2A;
+     --caramel: #D4A373;
+     --sage: #6B7280;
+     --pastelPink: #F4B7B7;
+     --text-primary: #E5E7EB;
+   }
+
    body {
-     font-family: 'Roboto', sans-serif;
+     font-family: 'Poppins', sans-serif;
+     background-color: var(--cream);
+     color: var(--text-primary, #333);
+     transition: background-color 0.3s, color 0.3s;
+   }
+
+   .blur-bg {
+     backdrop-filter: blur(5px);
+     background-color: rgba(245, 233, 214, 0.7);
+   }
+
+   .dark .blur-bg {
+     background-color: rgba(42, 42, 42, 0.7);
    }

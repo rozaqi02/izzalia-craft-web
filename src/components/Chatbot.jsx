@@ -1,229 +1,203 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import logoChatbot from '../assets/logochatbot.png'; // Pastikan file ini ada di src/assets/
+import { useState, useEffect, useRef } from 'react';
+  import { motion, AnimatePresence } from 'framer-motion';
+  import logoChatbot from '../assets/logochatbot.png';
 
-function Chatbot() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([{ text: 'Halo! Ketik "halo" atau "hai" untuk mulai chat dengan Izzabot 😄', sender: 'bot' }]);
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const chatbotName = "Izzabot";
+  const Chatbot = () => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [messages, setMessages] = useState([]);
+    const [input, setInput] = useState('');
+    const [userInfo, setUserInfo] = useState(null);
+    const [showForm, setShowForm] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const chatContainerRef = useRef(null);
 
-  // Fungsi untuk menangani pesan awal dan trigger form
-  const handleSendInitialMessage = (e) => {
-    if (e.key === 'Enter' && e.target.value.trim().toLowerCase() === 'halo' || e.target.value.trim().toLowerCase() === 'hai') {
-      const userMessage = e.target.value.trim();
-      setMessages((prev) => [...prev, { text: userMessage, sender: 'user' }]);
-      setIsFormOpen(true);
-      e.target.value = '';
-    } else if (e.key === 'Enter' && e.target.value.trim()) {
-      setMessages((prev) => [
-        ...prev,
-        { text: e.target.value.trim(), sender: 'user' },
-        { text: 'Maaf, ketik "halo" atau "hai" dulu ya untuk mulai! 😊', sender: 'bot' },
-      ]);
-      e.target.value = '';
-    }
-  };
+    // Fungsi untuk scroll ke pesan terbaru
+    useEffect(() => {
+      if (chatContainerRef.current) {
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      }
+    }, [messages]);
 
-  // Fungsi untuk menangani pengiriman form
-  const handleSubmitForm = (e) => {
-    e.preventDefault();
-    if (formData.name && formData.email && formData.phone && formData.message) {
+    // Deteksi "halo" atau "hai" untuk trigger form
+    const handleSend = async () => {
+      if (!input.trim()) return;
+
+      const newMessages = [...messages, { text: input, sender: 'user', timestamp: new Date() }];
+      setMessages(newMessages);
+      setInput('');
+
+      if (!userInfo && (input.toLowerCase() === 'halo' || input.toLowerCase() === 'hai')) {
+        setShowForm(true);
+        setMessages([...newMessages, { text: 'Halo! Silakan isi form berikut agar aku bisa mengenali kamu 😊', sender: 'bot', timestamp: new Date() }]);
+        return;
+      }
+
+      if (showForm) {
+        setIsLoading(true);
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulasi loading
+        setMessages([...newMessages, { text: 'Terima kasih! Data kamu sudah diterima. Sekarang aku bisa bantu lebih baik 😄', sender: 'bot', timestamp: new Date() }]);
+        setShowForm(false);
+        setIsLoading(false);
+        return;
+      }
+
+      if (userInfo) {
+        setIsLoading(true);
+        await new Promise((resolve) => setTimeout(resolve, 1200)); // Loading lebih natural
+        const response = generateResponse(input, userInfo.name);
+        setMessages([...newMessages, { text: response, sender: 'bot', timestamp: new Date() }]);
+        setIsLoading(false);
+      }
+    };
+
+    // Logika respon kompleks berdasarkan input
+    const generateResponse = (inputText, userName) => {
+      const lowerInput = inputText.toLowerCase().trim();
+      if (lowerInput.includes('tas') || lowerInput.includes('bahan')) {
+        if (lowerInput.includes('harga')) {
+          return `${userName}! 😊 Tas atau bahan craft kami mulai dari Rp 80.000, tergantung desain dan material. Mau cek koleksi di toko atau custom? Aku bantu pilih yang kece buat kamu! 🎨`;
+        } else if (lowerInput.includes('kustom')) {
+          return `${userName}! 🔥 Kustom tas seru banget! Kamu bisa pilih warna, bahan, sama aksesori di halaman Kustomisasi. Mau aku bantu desain yang unik buat kamu? 😎`;
+        } else {
+          return `${userName}! 👜 Kami punya banyak tas handmade dan bahan craft kece. Cek di halaman Toko atau Instagram @izzalia.id ya! Ada yang kamu suka?`;
+        }
+      } else if (lowerInput.includes('tutorial') || lowerInput.includes('belajar')) {
+        return `${userName}! 🎉 Tutorial craft ada di halaman Tutorial. Mulai dari jahit tas sederhana sampe proyek kreatif. Mau aku kasih tips spesial? 😄`;
+      } else if (lowerInput.includes('pesan') || lowerInput.includes('beli')) {
+        return `${userName}! 🛒 Yuk, pesen via WhatsApp (+62 852-3202-9768). Kasih tahu aku detailnya (warna, ukuran), aku bantu prosesin cepet! 🚀`;
+      } else if (lowerInput.includes('kontak') || lowerInput.includes('hubungi')) {
+        return `${userName}! 📞 Hubungi aku via WhatsApp (+62 852-3202-9768) atau cek Instagram @izzalia.id. Aku siap bantu 24/7! 😄`;
+      } else if (lowerInput.includes('terima kasih') || lowerInput.includes('makasih')) {
+        return `${userName}! Sama-sama! 😊 Seneng banget bisa bantu. Ada lagi yang mau ditanyain?`;
+      } else {
+        return `${userName}! Hmm, aku agak bingung nih 😅 Maksud kamu apa ya? Coba ceritain lebih detail, aku bantu sebisanya! 🌟`;
+      }
+    };
+
+    // Handle submit form
+    const handleFormSubmit = (e) => {
+      e.preventDefault();
+      const formData = {
+        name: e.target.name.value,
+        email: e.target.email.value,
+        phone: e.target.phone.value,
+        message: e.target.message.value,
+      };
+      setUserInfo(formData);
+      setShowForm(false);
       setIsLoading(true);
       setTimeout(() => {
-        setMessages((prev) => [
-          ...prev,
-          { text: `Halo ${formData.name}, saya ${chatbotName} dari Izzalia Craft! Senang kamu menghubungi kami 😄`, sender: 'bot' },
-        ]);
-        const response = generateHumanLikeResponse(formData.message, formData.name);
-        setMessages((prev) => [...prev, { text: response, sender: 'bot' }]);
-        setIsFormOpen(false);
-        setFormData({ name: '', email: '', phone: '', message: '' });
+        setMessages((prev) => [...prev, { text: `Halo ${formData.name}! Data kamu sudah masuk. Aku siap bantu, apa yang bisa aku lakuin buat kamu? 😄`, sender: 'bot', timestamp: new Date() }]);
         setIsLoading(false);
-      }, 1500); // Delay 1.5 detik
-    }
-  };
+      }, 1000);
+    };
 
-  // Fungsi untuk menangani pesan lanjutan
-  const handleSendFollowupMessage = (e) => {
-    if (e.key === 'Enter' && e.target.value.trim() && !isFormOpen) {
-      const userMessage = e.target.value.trim();
-      setMessages((prev) => [...prev, { text: userMessage, sender: 'user' }]);
-      setIsLoading(true);
-      setTimeout(() => {
-        const response = generateHumanLikeResponse(userMessage, formData.name);
-        setMessages((prev) => [...prev, { text: response, sender: 'bot' }]);
-        setIsLoading(false);
-      }, 1500); // Delay 1.5 detik
-      e.target.value = '';
-    }
-  };
-
-  // Fungsi untuk menghasilkan respon manusiawi
-  const generateHumanLikeResponse = (userMessage, userName) => {
-    const lowerMessage = userMessage.toLowerCase().trim();
-    let response = '';
-
-    if (lowerMessage.includes('tas') || lowerMessage.includes('beli')) {
-      const variations = [
-        `Halo ${userName}, wah seru banget kamu mau beli tas! 😍 Kami punya koleksi tas handmade keren, seperti tote klasik atau kustom yang bisa kamu desain di halaman Kustomisasi. Cek Toko ya, pilih warna favoritmu! Kalau mau PO, chat WA (+62 852-3202-9768). Ada warna spesial yang kamu suka?`,
-        `Hai ${userName}! Tas di Izzalia Craft dibuat dengan cinta, lho! 🎉 Ada tote, pouch, bahkan kustom yang bisa kamu atur. Kunjungi Toko atau Kustomisasi buat lihat. Mau pesen? Hubungi WA (+62 852-3202-9768), ya. Butuh saran ukuran?`,
-        `Yo ${userName}, pengen tas baru ya? 🔥 Stok ready dan PO ada di Toko. Desain kustom di Kustomisasi. Chat WA (+62 852-3202-9768) buat order, 5-7 hari sampai. Mau tambah charm?`,
-      ];
-      response = variations[Math.floor(Math.random() * variations.length)];
-    } else if (lowerMessage.includes('tutorial') || lowerMessage.includes('belajar')) {
-      const variations = [
-        `Halo ${userName}, keren banget mau belajar craft! 🎨 Cek Tutorial buat panduan menjahit tas. Butuh bahan kanvas? Beli di Toko. Bingung langkah? Tanya aku lagi, aku bantu!`,
-        `Hai ${userName}! Belajar craft asik banget! 🌟 Tutorial ada di halaman khusus. Butuh alat? Cek Toko. Ada yang mau ditanyain? Aku nemenin prosesnya!`,
-        `Yo ${userName}, jago craft ya? 🛠️ Tutorial buat tas ada di situs. Bahan di Toko. Stuck? Kirim pertanyaan, aku bantu sampe bisa!`,
-      ];
-      response = variations[Math.floor(Math.random() * variations.length)];
-    } else if (lowerMessage.includes('kontak') || lowerMessage.includes('hubungi')) {
-      const variations = [
-        `Halo ${userName}, mau kontak kami? 😄 WA ke +62 852-3202-9768 atau IG @izzalia.id. Online 09.00-17.00 WIB. Malam balas besok. Ada apa?`,
-        `Hai ${userName}! Hubungi WA (+62 852-3202-9768) atau IG @izzalia.id. Jam 09.00-17.00 WIB. Malam sabar ya, besok aku bales. Butuh bantuan?`,
-        `Yo ${userName}, chat langsung? 📱 WA +62 852-3202-9768 atau IG @izzalia.id. Online 09.00-17.00 WIB. Malam istirahat dulu. Urgent?`,
-      ];
-      response = variations[Math.floor(Math.random() * variations.length)];
-    } else if (lowerMessage.includes('harga') || lowerMessage.includes('berapa')) {
-      const variations = [
-        `Halo ${userName}, harga ya? 💸 Tote Rp150.000, pouch Rp80.000, kustom dari Rp200.000. Cek Toko buat detail. Mau tawar? WA (+62 852-3202-9768)!`,
-        `Hai ${userName}! Harga variasi, lho! 🌸 Tote Rp150.000, pouch Rp80.000, kustom Rp200.000+. Lihat di Toko atau tanya WA (+62 852-3202-9768). Budget khusus?`,
-        `Yo ${userName}, nanya harga? 💰 Tote Rp150.000, pouch Rp80.000, kustom Rp200.000+. Cek Toko atau WA (+62 852-3202-9768) buat nego. Pilih mana?`,
-      ];
-      response = variations[Math.floor(Math.random() * variations.length)];
-    } else if (lowerMessage.includes('pengiriman') || lowerMessage.includes('kirim')) {
-      const variations = [
-        `Halo ${userName}, pengiriman ke seluruh Indo! 🚚 5-7 hari kerja setelah bayar. Ongkir beda-beda, tanya WA (+62 852-3202-9768). Ke mana?`,
-        `Hai ${userName}! Kirim cover seluruh Indo, lho! 📦 5-7 hari kerja. Ongkir custom, cek via WA (+62 852-3202-9768). Kota kamu mana?`,
-        `Yo ${userName}, pengiriman? ✈️ 5-7 hari ke seluruh Indo setelah bayar. Ongkir hubungi WA (+62 852-3202-9768). Alamatnya di mana?`,
-      ];
-      response = variations[Math.floor(Math.random() * variations.length)];
-    } else if (lowerMessage.includes('kualitas') || lowerMessage.includes('bagus')) {
-      const variations = [
-        `Halo ${userName}, kualitas oke banget! 🛡️ Tas handmade dari kanvas dan kulit sintetis, awet dan stylish. Cek Toko ya!`,
-        `Hai ${userName}! Tas kita top, lho! 🌟 Handmade dari bahan premium, tahan lama. Lihat di Toko atau tanya WA (+62 852-3202-9768).`,
-        `Yo ${userName}, kualitas kece abis! 💪 Handmade dari material pilihan. Cek Toko atau chat WA (+62 852-3202-9768) buat bukti!`,
-      ];
-      response = variations[Math.floor(Math.random() * variations.length)];
-    } else if (lowerMessage.includes('diskon') || lowerMessage.includes('promo')) {
-      const variations = [
-        `Halo ${userName}, cari diskon? 🎉 Belum ada promo besar, tapi follow IG @izzalia.id buat update. Ada flash sale kadang! WA (+62 852-3202-9768) ya!`,
-        `Hai ${userName}! Promo? 🌸 Belum ada diskon besar, stay tuned di IG @izzalia.id. Tanya WA (+62 852-3202-9768) buat info spesial!`,
-        `Yo ${userName}, pengen diskon? 🔥 Belum ada promo, cek IG @izzalia.id. Hubungi WA (+62 852-3202-9768) buat deal. Sabar ya!`,
-      ];
-      response = variations[Math.floor(Math.random() * variations.length)];
-    } else if (lowerMessage.includes('terima kasih') || lowerMessage.includes('makasih')) {
-      const variations = [
-        `Halo ${userName}, sama-sama! 😄 Senang bantu. Ada lagi yang mau ditanyain? Chat aku kapan aja!`,
-        `Hai ${userName}, makasih balik! 🌟 Seneng banget bantu kamu. Pertanyaan lain? Chat lagi ya!`,
-        `Yo ${userName}, no problem! 💕 Terima kasih udah chat. Panggil aku lagi kalau butuh, oke?`,
-      ];
-      response = variations[Math.floor(Math.random() * variations.length)];
-    } else {
-      const variations = [
-        `Halo ${userName}, hmm pesanmu seru! 😄 Tapi aku bingung, maksudnya apa ya? Ceritain lagi, aku bantu cari solusi!`,
-        `Hai ${userName}! Pesanmu unik banget! 🤔 Belum ngerti, jelasin lagi ya? Aku bantu dari tas sampe craft!`,
-        `Yo ${userName}, pesanmu bikin penasaran! 😮 Apa kabar? Kasih detail, aku bantu maksimal!`,
-      ];
-      response = variations[Math.floor(Math.random() * variations.length)];
-    }
-
-    return response;
-  };
-
-  return (
-    <div className="fixed bottom-4 right-4 z-50">
-      {isOpen && (
+    return (
+      <>
         <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-cream p-4 rounded-lg shadow-lg w-96 h-[500px] flex flex-col" // Ukuran diperbesar
+          whileHover={{ scale: 1.1 }}
+          className="fixed bottom-6 right-6 z-50"
         >
-          <div className="flex items-center p-2 bg-sage text-cream rounded-t-lg">
-            <img src={logoChatbot} alt="Izzabot" className="w-8 h-8 rounded-full mr-2" />
-            <h3 className="text-lg font-sans">Izzabot</h3>
-          </div>
-          <div className="flex-1 overflow-y-auto space-y-2 p-2">
-            {messages.map((msg, index) => (
-              <div
-                key={index}
-                className={`max-w-[70%] p-2 rounded-lg ${msg.sender === 'bot' ? 'bg-sage text-cream ml-10' : 'bg-caramel text-white self-end mr-10'}`}
-              >
-                {msg.text}
-              </div>
-            ))}
-            {isLoading && (
-              <div className="p-2 text-center text-gray-500">Izzabot sedang mengetik... ⏳</div>
-            )}
-          </div>
-          {!isFormOpen ? (
-            <div className="mt-2">
-              <input
-                type="text"
-                placeholder="Ketik pesan untuk Izzabot..."
-                className="w-full p-2 border rounded"
-                onKeyPress={handleSendFollowupMessage}
-                disabled={isLoading}
-              />
-            </div>
-          ) : (
-            <form onSubmit={handleSubmitForm} className="space-y-2 p-2">
-              <input
-                type="text"
-                placeholder="Nama"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full p-2 border rounded"
-                required
-              />
-              <input
-                type="email"
-                placeholder="Email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full p-2 border rounded"
-                required
-              />
-              <input
-                type="tel"
-                placeholder="No HP"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full p-2 border rounded"
-                required
-              />
-              <textarea
-                placeholder="Pesan"
-                value={formData.message}
-                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                className="w-full p-2 border rounded h-20"
-                required
-              />
-              <button
-                type="submit"
-                className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 transition"
-                disabled={isLoading}
-              >
-                Kirim
-              </button>
-            </form>
-          )}
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setIsOpen(true)}
+            className="bg-caramel text-cream w-14 h-14 rounded-full shadow-lg flex items-center justify-center relative"
+          >
+            💬
+            <span className="absolute -top-6 right-0 bg-caramel text-white text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+              Ketik "halo" atau "hai" untuk mulai! 😊
+            </span>
+          </motion.button>
         </motion.div>
-      )}
-      <motion.button
-        onClick={() => setIsOpen(!isOpen)}
-        className="bg-caramel text-cream w-14 h-14 rounded-full flex items-center justify-center fixed bottom-4 right-4 shadow-lg hover:bg-pastelPink transition"
-        initial={{ scale: 1 }}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-      >
-        💬
-      </motion.button>
-    </div>
-  );
-}
 
-export default Chatbot;
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ x: 300, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 300, opacity: 0 }}
+              className="fixed bottom-6 right-6 w-80 h-[500px] bg-cream rounded-lg shadow-xl flex flex-col z-50"
+            >
+              <div className="bg-caramel text-cream p-4 rounded-t-lg flex items-center gap-2">
+                <img src={logoChatbot} alt="Izzalia Bot" className="w-8 h-8 rounded-full" />
+                <h3 className="font-script text-lg">Izzalia Bot</h3>
+                <button onClick={() => setIsOpen(false)} className="ml-auto text-cream">✖</button>
+              </div>
+              <div ref={chatContainerRef} className="flex-1 p-4 overflow-y-auto bg-cream/90 backdrop-blur-sm">
+                {messages.map((msg, index) => (
+                  <div
+                    key={index}
+                    className={`mb-2 ${msg.sender === 'user' ? 'text-right' : 'text-left'}`}
+                  >
+                    <p className="inline-block p-2 rounded-lg bg-sage text-cream">
+                      {msg.text}
+                    </p>
+                  </div>
+                ))}
+                {isLoading && (
+                  <div className="text-center text-gray-500">Memproses... ⏳</div>
+                )}
+              </div>
+              <div className="p-4 border-t">
+                {showForm ? (
+                  <form onSubmit={handleFormSubmit} className="space-y-4">
+                    <input
+                      type="text"
+                      name="name"
+                      placeholder="Nama Lengkap*"
+                      className="w-full p-2 border rounded"
+                      required
+                    />
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="Email*"
+                      className="w-full p-2 border rounded"
+                      required
+                    />
+                    <input
+                      type="tel"
+                      name="phone"
+                      placeholder="No HP*"
+                      className="w-full p-2 border rounded"
+                      required
+                    />
+                    <textarea
+                      name="message"
+                      placeholder="Pesan Tambahan"
+                      className="w-full p-2 border rounded"
+                    />
+                    <button
+                      type="submit"
+                      className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600"
+                    >
+                      Kirim
+                    </button>
+                  </form>
+                ) : (
+                  <>
+                    <input
+                      type="text"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                      placeholder="Ketik pesan..."
+                      className="w-full p-2 border rounded"
+                    />
+                    <button
+                      onClick={handleSend}
+                      className="mt-2 w-full bg-caramel text-cream p-2 rounded hover:bg-pastelPink"
+                    >
+                      Kirim
+                    </button>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </>
+    );
+  };
+
+  export default Chatbot;

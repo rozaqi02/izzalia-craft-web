@@ -3,17 +3,18 @@ module.exports = {
        "./index.html",
        "./src/**/*.{js,jsx}",
      ],
+     darkMode: 'class',
      theme: {
        extend: {
          colors: {
-           caramel: '#8B6F47',
-           sage: '#A8B5A2',
-           cream: '#F5E9D6',
-           pastelPink: '#F4C7C3',
+           cream: 'var(--cream)',
+           caramel: 'var(--caramel)',
+           sage: 'var(--sage)',
+           pastelPink: 'var(--pastelPink)',
          },
          fontFamily: {
-           script: ['Pacifico', 'cursive'],
-           sans: ['Roboto', 'sans-serif'],
+           script: ['Caveat', 'cursive'],
+           sans: ['Poppins', 'sans-serif'],
          },
        },
      },
